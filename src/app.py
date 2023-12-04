@@ -37,7 +37,7 @@ if __name__ == "__main__":
         st.session_state.translated_flag = False
 
     if 'data_dir' not in st.session_state:
-        st.session_state.data_dir = '../../ForeignWhisperscopy/Data/'
+        st.session_state.data_dir = '../Data/'
 
     if 'file_loc' not in st.session_state:
         st.session_state.file_loc = ''
