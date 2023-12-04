@@ -1,19 +1,29 @@
 import sys
 sys.path.append('../pkgs/')
-
+import streamlit as st
 import os
 import pytube as pt
+import pandas as pd
 
-def print_playlist_detail(plst):
-    print("URL: ", plst.playlist_url)
-    print("Playlist Title: ",plst.title)
-    print("Playlist Description: ",plst.description)
-    print(f"Number of videos in {plst.title} playlist: ", len(plst.video_urls))
-    print("Channel: ",plst.owner)
+def print_playlist_detail(plst, if_streamlit = False):
+    if not if_streamlit:
+        print("URL: ", plst.playlist_url)
+        print("Playlist Title: ",plst.title)
+        print("Playlist Description: ",plst.description)
+        print(f"Number of videos in {plst.title} playlist: ", len(plst.video_urls))
+        print("Channel: ",plst.owner)
+    else:
+        header = ['URL','Playlist Title','Playlist Description',
+                  f"Number of videos in {plst.title} playlist: ",'Channel']
+        
+        values = [[str(plst.playlist_url),str(plst.title),str(plst.description),
+                  str(plst.video_urls),str(plst.owner)]]
+
+        return pd.DataFrame(values,columns = header)
 
     return
 
-def download_videos(plst, num,data_dir):
+def download_videos(plst, num,data_dir, file_ = None):
     folder_path = os.path.join(data_dir,'Videos')
     if(not os.path.isdir(folder_path)):
         os.mkdir(folder_path)
@@ -21,14 +31,19 @@ def download_videos(plst, num,data_dir):
     if num==-1:
         num = len(list(plst))
     
-    for video in list(plst)[:num]:
+    if file_:
+        file_list = [file_]
+    else:
+        file_list = list(plst)[:num]
+
+    for video in file_list:
         video   = pt.YouTube(video, use_oauth=True, allow_oauth_cache=True)
         print("Downloading Video: ",video.title)
         video.streams.first().download(folder_path)
         print('---------------------')
     return
 
-def download_captions(plst, num,data_dir):
+def download_captions(plst, num,data_dir, file_ = None):
     folder_path = os.path.join(data_dir,'Captions')
     if(not os.path.isdir(folder_path)):
         os.mkdir(folder_path)
@@ -36,7 +51,12 @@ def download_captions(plst, num,data_dir):
     if num==-1:
         num = len(list(plst))
 
-    for video in list(plst)[:num]:
+    if file_:
+        file_list = [file_]
+    else:
+        file_list = list(plst)[:num]
+
+    for video in file_list:
         video   = pt.YouTube(video, use_oauth=True, allow_oauth_cache=True)
         print("Downloading Captions for: ",video.title)
         init = video.streams.first()

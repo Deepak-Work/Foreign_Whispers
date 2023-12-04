@@ -1,5 +1,5 @@
 import os
-
+from itertools import groupby
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 from urllib.error import HTTPError
 
@@ -26,6 +26,25 @@ class Languages():
                 print("Model not available in Opus-MT")
                 return None, model_name
             
+
+def all_equal(iterable):
+    iterable = [_.lower() for _ in iterable if _ not in [',','.',' ']]
+    g = groupby(iterable)
+    return next(g, True) and not next(g, False)
+
+def n_consecutive_word(line, n = 6):
+    '''Translation models seems to have a bug. When the input sentence is a proper noun, they tend to output a very long sentence with the same word.
+    This function is a workaround that bug.'''
+    new_line, ctr = [],0
+    while ctr<len(line):
+        if not all_equal(line[ctr:ctr+n]):
+            new_line+=line[ctr:ctr+1]
+        ctr+=1
+    new_line+=[line[-1]]
+    return new_line
+
+
+
 def chunkwise_translate(model,sentences,tokenizer,num_sen_per_chunk = 10, device = 'mps'):
     res_sen = []
 
@@ -34,7 +53,9 @@ def chunkwise_translate(model,sentences,tokenizer,num_sen_per_chunk = 10, device
         translated = model.generate(**tokenizer(target_sen, return_tensors="pt", padding=True).to(device))
             
         for t in translated:
-            res_sen.append(' '.join([_ for _ in [tokenizer.decode(_) for _ in t] if _ not in ['<pad>','</s>','.']]))
+            decoded_sentence = [_ for _ in [tokenizer.decode(_) for _ in t] if _ not in ['<pad>','</s>','.']]
+            format_sentence = n_consecutive_word(decoded_sentence)
+            res_sen.append(' '.join(format_sentence))
         
     return res_sen
 
@@ -69,4 +90,4 @@ def save_translate_srt_file(data_dir, filename, model,language,tokenizer, save =
         srt_file.close()
         print("Translated file saved at: ", os.path.join(translate_folder,filename))
 
-    return ins_srt
+    return filename

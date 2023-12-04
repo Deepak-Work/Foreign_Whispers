@@ -19,7 +19,7 @@ if __name__ == '__main__':
     parser.add_argument("--caption", type=bool, default= True,
                     help="If Caption should also be downloaded")
     
-    parser.add_argument("--data_dir", type=str, default= '../../../../ForeignWhisperscopy/Data/',
+    parser.add_argument("--data_dir", type=str, default= '../../../ForeignWhisperscopy/Data/',
                     help="Data directory for I/O")
     
     parser.add_argument("--select_lang", type=str, default= 'German',
@@ -28,12 +28,16 @@ if __name__ == '__main__':
     parser.add_argument("--device", type=str, default= 'mps',
                     help="Device to run the translation and TTS module")
     
+    parser.add_argument("--burn_subtitle", type=bool, default= True,
+                    help="If to burn subtitle in the video, set True else False")
+    
     args = parser.parse_args()
      
     playlist_url = args.playlist_url
     num_videos_download = args.num_videos_download
     caption = args.caption
     data_dir = args.data_dir
+    burn_subtitle = args.burn_subtitle
 
     if(not os.path.isdir(data_dir)):
         os.mkdir(data_dir)
@@ -105,7 +109,15 @@ if __name__ == '__main__':
     for file in audio_srts:
         srt_file = os.path.join(f'{data_dir}Transcript/translate_{select_lang}',file)
         print("TTS for: ", srt_file)
-        temp = generate_audio(data_dir,srt_file,select_lang, blockwiseadd=5)
+        translated_audiopath = generate_audio(data_dir,srt_file,select_lang, blockwiseadd=5)
+        translated_videopath = os.path.join(f'{data_dir}Videos/translate_{select_lang}',file.replace('.srt','.mp4'))
+        og_videopath = os.path.join(f'{data_dir}Videos',file.replace('.srt','.mp4'))
+
+
+        output_path = gen_translated_video(og_videopath,translated_videopath,translated_audiopath,srt_file,burn_subtitle,select_lang)
+
+        print("Final video saved at: ", output_path)
+
 
 
     
